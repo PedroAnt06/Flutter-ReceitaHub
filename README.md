@@ -8,8 +8,9 @@ Aplicativo mobile de receitas feito em **Flutter**. Permite pesquisar receitas p
 
 | Explorar | Pesquisar | Detalhe da receita |
 | :---: | :---: | :---: |
-| <img width="447" height="796" alt="image" src="https://github.com/user-attachments/assets/8738d1f3-34db-40bc-b3ea-73a3449cd891" />
-| ![Pesquisar](docs/screenshots/pesquisar.png) | ![Detalhe](docs/screenshots/detalhe.png) |
+| <img width="447" height="796" alt="image" src="https://github.com/user-attachments/assets/8738d1f3-34db-40bc-b3ea-73a3449cd891" /> | <img width="445" height="796" alt="image" src="https://github.com/user-attachments/assets/0b36c088-2e4b-43f4-bba6-a17496d06a00" />
+
+ | ![Detalhe](docs/screenshots/detalhe.png) |
 
 | Favoritos | Carregando | Erro de conexão |
 | :---: | :---: | :---: |
