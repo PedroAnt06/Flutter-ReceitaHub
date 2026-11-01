@@ -41,10 +41,13 @@ class _TelaInicialState extends State<TelaInicial> {
   final _controller = TextEditingController(); // le o que foi digitado no campo
   String? _erro; // mensagem de erro (null = sem erro)
   String? _termo; // termo valido pesquisado (null = nada pesquisado ainda)
+  bool _encontrou = false; // true = a receita provisoria combina com o termo
+  final _foco = FocusNode(); // permite colocar o cursor no campo pelo codigo
 
   @override
   void dispose() {
     _controller.dispose(); // libera o controller quando a tela fecha
+    _foco.dispose();
     super.dispose();
   }
 
@@ -57,6 +60,7 @@ class _TelaInicialState extends State<TelaInicial> {
       setState(() {
         _erro = 'Digite o nome de uma receita. Exemplo: Sopa de Lobo.';
         _termo = null;
+        _encontrou = false;
       });
       return;
     }
@@ -65,7 +69,70 @@ class _TelaInicialState extends State<TelaInicial> {
     setState(() {
       _erro = null;
       _termo = texto;
+      // compara em minusculas para 'SOPA' achar 'Sopa de Lobo'
+      _encontrou = 'sopa de lobo'.contains(texto.toLowerCase()); //ainda deixei o card local
     });
+  }
+
+  // botao "Alterar pesquisa": poe o cursor no campo e seleciona o texto
+  void _alterarPesquisa() {
+    _foco.requestFocus();
+    _controller.selection = TextSelection(
+      baseOffset: 0,
+      extentOffset: _controller.text.length,
+    );
+  }
+
+  // botao "Ver todas as receitas": limpa a pesquisa e volta para a lista
+  void _verTodas() {
+    _controller.clear();
+    setState(() {
+      _termo = null;
+      _encontrou = false;
+    });
+  }
+
+  // tela mostrada quando a pesquisa nao encontra nada
+  Widget _naoEncontrado() {
+    return SizedBox(
+      width: double.infinity, // ocupa a largura toda para centralizar o conteudo
+      child: Column(
+        spacing: 12,
+        children: [
+          // circulo com o icone
+          Container(
+            width: 100,
+            height: 100,
+            decoration: const BoxDecoration(
+              color: Color(0xFFF3E0E0),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.search_off, size: 48, color: primary),
+          ),
+          const Text(
+            'Nenhum resultado',
+            style: TextStyle(fontSize: 22, color: primary, fontWeight: FontWeight.bold),
+          ),
+          Text(
+            'Não encontramos receitas para "$_termo".',
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 14, color: grey),
+            overflow: TextOverflow.ellipsis,
+          ),
+          TextButton(
+            onPressed: _verTodas,
+            style: TextButton.styleFrom(
+              overlayColor: secondary,
+            ),
+            child: const Text(
+              'Ver todas as receitas',
+              style:
+              TextStyle(color: primary, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -97,6 +164,7 @@ class _TelaInicialState extends State<TelaInicial> {
 
             TextField(
               controller: _controller, // liga o campo ao controller
+              focusNode: _foco, // liga o campo ao foco (usado no "Alterar pesquisa")
               onSubmitted: (_) => _pesquisar(), // Enter no teclado tambem pesquisa
               textInputAction: TextInputAction.search,
               decoration: InputDecoration(
@@ -145,6 +213,12 @@ class _TelaInicialState extends State<TelaInicial> {
 
               ),
             ),
+
+            // pesquisou e nao achou: mostra a tela de "Nenhum resultado"
+            // senao: mostra a lista normal (com o termo, se tiver pesquisado)
+            if (_termo != null && !_encontrou)
+              _naoEncontrado()
+            else ...[
 
             // so aparece quando existe um termo valido
             if (_termo != null)
@@ -227,6 +301,7 @@ class _TelaInicialState extends State<TelaInicial> {
                 ),
               ),
             )
+            ], // fim do "else ...[" da lista normal
           ],
         ),
 
