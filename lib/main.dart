@@ -28,8 +28,45 @@ class MeuApp extends StatelessWidget {
   }
 }
 
-class TelaInicial extends StatelessWidget{
+// StatefulWidget = tela que pode mudar (mostrar erro, mostrar resultado...)
+class TelaInicial extends StatefulWidget {
   const TelaInicial({super.key}); //construtor para chamar na classe acima
+
+  @override
+  State<TelaInicial> createState() => _TelaInicialState();
+}
+
+// Aqui fica a "memória" da tela e a lógica dela
+class _TelaInicialState extends State<TelaInicial> {
+  final _controller = TextEditingController(); // le o que foi digitado no campo
+  String? _erro; // mensagem de erro (null = sem erro)
+  String? _termo; // termo valido pesquisado (null = nada pesquisado ainda)
+
+  @override
+  void dispose() {
+    _controller.dispose(); // libera o controller quando a tela fecha
+    super.dispose();
+  }
+
+  void _pesquisar() {
+    // tira espacos do comeco/fim e junta espacos repetidos do meio
+    final texto = _controller.text.trim().split(RegExp(r'\s+')).join(' ');
+
+    // consulta vazia ou so com espacos: mostra erro e NAO pesquisa
+    if (texto.isEmpty) {
+      setState(() {
+        _erro = 'Digite o nome de uma receita. Exemplo: Sopa de Lobo.';
+        _termo = null;
+      });
+      return;
+    }
+
+    // consulta valida: limpa o erro e guarda o termo
+    setState(() {
+      _erro = null;
+      _termo = texto;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,13 +96,19 @@ class TelaInicial extends StatelessWidget{
             ),
 
             TextField(
+              controller: _controller, // liga o campo ao controller
+              onSubmitted: (_) => _pesquisar(), // Enter no teclado tambem pesquisa
+              textInputAction: TextInputAction.search,
               decoration: InputDecoration(
-                hintText: 'Buscar receitas...', //placeholder
+                labelText: 'Nome da receita', // rotulo do campo
+                errorText: _erro, // mostra o erro embaixo do campo (null = some)
+                hintText: 'Ex.: Sopa de Lobo', //placeholder
                 hintStyle: const TextStyle(color:grey),
                 prefixIcon: const Icon(Icons.search, color: primary,),
-                filled: true, // fundo do campo
                 fillColor: white, //cor do fundo do campo
-
+                floatingLabelStyle: const TextStyle(
+                  color: primary, // é acor do titulo do campo quando ativo
+                ),
                 //borda
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.all(Radius.circular(12)),
@@ -85,7 +128,7 @@ class TelaInicial extends StatelessWidget{
               height: 54, //define altura
               child: FilledButton( //havia usado esse widget puro, mas nao ocupava toda a tela ai envolvi ele no SizedBox que delimita o tamanho total a tela
 
-                onPressed: () => print('teste'),
+                onPressed: _pesquisar, // chama o metodo (sem parenteses)
                 style: FilledButton.styleFrom(
                     backgroundColor: primary,
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), //coloca esse padding nas 4 direcoes
@@ -102,6 +145,13 @@ class TelaInicial extends StatelessWidget{
 
               ),
             ),
+
+            // so aparece quando existe um termo valido
+            if (_termo != null)
+              Text(
+                'Resultados para "$_termo"',
+                style: TextStyle(fontSize: 18, color: primary, fontWeight: FontWeight.w600),
+              ),
 
             Text(
                 'Receitas disponíveis',
