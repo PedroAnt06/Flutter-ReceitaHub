@@ -26,7 +26,7 @@ class NaoEncontrado extends StatelessWidget {
             width: 100,
             height: 100,
             decoration: const BoxDecoration(
-              color: Color(0xFFF3E0E0),
+              color: rosaClaro,
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.search_off, size: 48, color: primary),

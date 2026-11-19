@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 
+import '../data/receitas.dart';
 import '../theme/cores.dart';
-import '../widgets/barra_navegacao.dart';
-import '../widgets/botao_buscar.dart';
+import '../widgets/botao_principal.dart';
 import '../widgets/campo_busca.dart';
 import '../widgets/card_receita.dart';
-import '../widgets/nao_encontrado.dart';
+import '../widgets/carregando_receitas.dart';
+import '../widgets/estado_mensagem.dart';
+import 'tela_pesquisa.dart';
 
-// tela principal do app (Explorar)
-// aqui ficam a logica da pesquisa e a montagem da tela
-// os pedacos visuais (campo, botao, card...) estao separados na pasta widgets
-// StatefulWidget = tela que pode mudar (mostrar erro, mostrar resultado...)
+// mude para true se quiser ver a tela de erro de conexao
+bool simularErro = false;
+
+// tela Explorar (primeira aba do app)
+// mostra a lista de receitas e leva pra tela de pesquisa e pro detalhe
+// StatefulWidget = tela que pode mudar (carregando, erro, lista pronta...)
 class TelaInicial extends StatefulWidget {
   const TelaInicial({super.key}); //construtor para chamar na classe acima
 
@@ -21,58 +25,106 @@ class TelaInicial extends StatefulWidget {
 // Aqui fica a "memória" da tela e a lógica dela
 class _TelaInicialState extends State<TelaInicial> {
   final _controller = TextEditingController(); // le o que foi digitado no campo
-  String? _erro; // mensagem de erro (null = sem erro)
-  String? _termo; // termo valido pesquisado (null = nada pesquisado ainda)
-  bool _encontrou = false; // true = a receita provisoria combina com o termo
-  final _foco = FocusNode(); // permite colocar o cursor no campo pelo codigo
+  bool _carregando = true; // true = mostra a tela de carregando
+  bool _deuErro = false; // true = mostra a tela de erro
+
+  @override
+  void initState() {
+    super.initState();
+    _esperar(); // assim que a tela abre comeca a "carregar"
+  }
 
   @override
   void dispose() {
     _controller.dispose(); // libera o controller quando a tela fecha
-    _foco.dispose();
     super.dispose();
   }
 
-  // roda quando clica em "Buscar Receitas" ou aperta Enter
-  void _pesquisar() {
-    // tira espacos do comeco/fim e junta espacos repetidos do meio
-    final texto = _controller.text.trim().split(RegExp(r'\s+')).join(' ');
-
-    // consulta vazia ou so com espacos: mostra erro e NAO pesquisa
-    if (texto.isEmpty) {
+  // finge uma espera de internet: depois de 1 segundo termina de carregar
+  // Future.delayed roda o que esta dentro das chaves depois do tempo passar
+  void _esperar() {
+    Future.delayed(const Duration(seconds: 1), () {
+      if (!mounted) return; // se a tela ja fechou nao faz nada
       setState(() {
-        _erro = 'Digite o nome de uma receita. Exemplo: Sopa de Lobo.';
-        _termo = null;
-        _encontrou = false;
+        _carregando = false;
+        _deuErro = simularErro; // se simularErro for true, cai na tela de erro
       });
-      return;
+    });
+  }
+
+  // botao "Tentar novamente": volta pra carregando e espera de novo
+  void _tentarNovamente() {
+    setState(() {
+      _carregando = true;
+      _deuErro = false;
+    });
+    _esperar();
+  }
+
+  // abre a tela de pesquisa levando o que foi digitado
+  void _abrirPesquisa() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TelaPesquisa(termoInicial: _controller.text),
+      ),
+    ).then((_) => setState(() {})); // quando voltar, redesenha (os coracoes podem ter mudado)
+  }
+
+  // decide o que aparece embaixo do titulo: carregando, erro ou a lista
+  Widget _conteudo() {
+    // 1) ainda carregando (widgets/carregando_receitas.dart)
+    if (_carregando) {
+      return const CarregandoReceitas();
     }
 
-    // consulta valida: limpa o erro e guarda o termo
-    setState(() {
-      _erro = null;
-      _termo = texto;
-      // compara em minusculas para 'SOPA' achar 'Sopa de Lobo'
-      _encontrou = 'sopa de lobo'.contains(texto.toLowerCase()); //ainda deixei o card local
-    });
-  }
+    // 2) deu erro (widgets/estado_mensagem.dart)
+    if (_deuErro) {
+      return EstadoMensagem(
+        icone: Icons.error_outline,
+        titulo: 'Não foi possível carregar as receitas.',
+        mensagem: 'Verifique sua conexão e tente novamente.',
+        textoBotao: 'Tentar novamente',
+        onBotao: _tentarNovamente,
+      );
+    }
 
-  // botao "Alterar pesquisa": poe o cursor no campo e seleciona o texto
-  void _alterarPesquisa() {
-    _foco.requestFocus();
-    _controller.selection = TextSelection(
-      baseOffset: 0,
-      extentOffset: _controller.text.length,
+    // 3) deu certo: mostra o campo, o botao e a lista de receitas
+    return Column(
+      spacing: 16, // espacamento entre os itens dessa coluna
+      crossAxisAlignment: CrossAxisAlignment.start, // alinha os filhos no eixo oposto ao fluxo principal do layout
+      children: [
+
+        // campo de texto (widgets/campo_busca.dart)
+        // aqui nao valida nada, quem valida é a tela de pesquisa
+        CampoBusca(
+          controller: _controller,
+          erro: null,
+          onPesquisar: _abrirPesquisa,
+        ),
+
+        // botao de buscar (widgets/botao_principal.dart)
+        BotaoPrincipal(texto: 'Buscar Receitas', onPressed: _abrirPesquisa),
+
+        Text(
+            'Receitas disponíveis',
+            style: TextStyle(fontSize: 18, color: primary, fontWeight: FontWeight.w600)
+        ),
+
+        Text(
+            'Selecione uma receita para ver o preparo.',
+            style: TextStyle(fontSize: 14, color: grey)
+        ),
+
+        // um cartao pra cada receita da lista (widgets/card_receita.dart)
+        // setState vazio so serve pra redesenhar a tela
+        for (final receita in receitas)
+          CardReceita(
+            receita: receita,
+            onMudou: () => setState(() {}),
+          ),
+      ],
     );
-  }
-
-  // botao "Ver todas as receitas": limpa a pesquisa e volta para a lista
-  void _verTodas() {
-    _controller.clear();
-    setState(() {
-      _termo = null;
-      _encontrou = false;
-    });
   }
 
   @override
@@ -85,13 +137,14 @@ class _TelaInicialState extends State<TelaInicial> {
         backgroundColor: background,
       ),
 
-      body: Padding(
+      // SingleChildScrollView deixa a tela rolar quando o conteudo nao cabe
+      body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), //coloca esse padding nas 4 direcoes
         child:
 
         Column(
           spacing: 16, // espacamento entre os itens dessa coluna
-          crossAxisAlignment: CrossAxisAlignment.start, // alinha os filhos no eixo oposto ao fluxo principal do layout
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
                 'Receitas',
@@ -102,52 +155,12 @@ class _TelaInicialState extends State<TelaInicial> {
                 style: TextStyle(fontSize: 14, color: grey)
             ),
 
-            // campo de texto (widgets/campo_busca.dart)
-            // passa o que ele precisa: controller, foco, erro e o que fazer no Enter
-            CampoBusca(
-              controller: _controller,
-              foco: _foco,
-              erro: _erro,
-              onPesquisar: _pesquisar,
-            ),
-
-            // botao de buscar (widgets/botao_buscar.dart)
-            BotaoBuscar(onPressed: _pesquisar),
-
-            // pesquisou e nao achou: mostra a tela de "Nenhum resultado"
-            // senao: mostra a lista normal (com o termo, se tiver pesquisado)
-            if (_termo != null && !_encontrou)
-              // o ! diz pro dart que aqui o _termo nao é null (o if de cima ja garantiu)
-              NaoEncontrado(termo: _termo!, onVerTodas: _verTodas)
-            else ...[
-
-            // so aparece quando existe um termo valido
-            if (_termo != null)
-              Text(
-                'Resultados para "$_termo"',
-                style: TextStyle(fontSize: 18, color: primary, fontWeight: FontWeight.w600),
-              ),
-
-            Text(
-                'Receitas disponíveis',
-                style: TextStyle(fontSize: 18, color: primary, fontWeight: FontWeight.w600)
-            ),
-
-            Text(
-                'Selecione uma receita para ver o preparo.',
-                style: TextStyle(fontSize: 14, color: grey)
-            ),
-
-            // cartao da receita (widgets/card_receita.dart)
-            const CardReceita(),
-            ], // fim do "else ...[" da lista normal
+            // o resto muda conforme o estado (carregando, erro ou lista)
+            _conteudo(),
           ],
         ),
 
       ),
-
-      //Pertence ao scaffold tambem, sendo do scafold (appbar, body e bottomnavigationbar)
-      bottomNavigationBar: const BarraNavegacao(),
     );
   }
 }

@@ -3,11 +3,10 @@ import 'package:flutter/material.dart';
 import '../theme/cores.dart';
 
 // campo de texto onde digita o nome da receita
-// ele nao guarda nada sozinho, tudo que ele precisa vem de fora da tela inicial
+// ele nao guarda nada sozinho, tudo que ele precisa vem de fora da tela
 // por isso é StatelessWidget (nao muda por conta propria)
 class CampoBusca extends StatelessWidget {
   final TextEditingController controller; // le o que foi digitado no campo
-  final FocusNode foco; // controla o cursor do campo
   final String? erro; // mensagem de erro (null = sem erro)
   final VoidCallback onPesquisar; // o que fazer quando apertar Enter
 
@@ -15,7 +14,6 @@ class CampoBusca extends StatelessWidget {
   const CampoBusca({
     super.key,
     required this.controller,
-    required this.foco,
     required this.erro,
     required this.onPesquisar,
   });
@@ -24,7 +22,6 @@ class CampoBusca extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextField(
       controller: controller, // liga o campo ao controller
-      focusNode: foco, // liga o campo ao foco (usado no "Alterar pesquisa")
       onSubmitted: (_) => onPesquisar(), // Enter no teclado tambem pesquisa
       textInputAction: TextInputAction.search,
       decoration: InputDecoration(

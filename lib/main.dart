@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'screens/tela_inicial.dart';
+import 'screens/tela_principal.dart';
 import 'theme/cores.dart';
 
 // app começa
@@ -9,7 +9,7 @@ void main() {
 }
 
 // O app inteiro: define o tema e qual tela aparece primeiro.
-// a tela em si esta em screens/tela_inicial.dart
+// a primeira tela é a TelaPrincipal (screens/tela_principal.dart), que tem a barra de navegacao
 class MeuApp extends StatelessWidget {
   const MeuApp({super.key});
 
@@ -21,7 +21,7 @@ class MeuApp extends StatelessWidget {
       theme: ThemeData(
         scaffoldBackgroundColor: background
       ),
-      home: const TelaInicial(),
+      home: const TelaPrincipal(),
     );
   }
 }

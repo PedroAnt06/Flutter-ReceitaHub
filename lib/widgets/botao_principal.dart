@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../theme/cores.dart';
 
-// botao grande "Buscar Receitas"
-// o que ele faz quando clica vem de fora (onPressed), assim a tela inicial decide
-class BotaoBuscar extends StatelessWidget {
+// botao grande vermelho usado em varias telas (Buscar, Pesquisar, Tentar novamente...)
+// o texto e o que ele faz quando clica vem de fora, assim cada tela decide
+class BotaoPrincipal extends StatelessWidget {
+  final String texto;
   final VoidCallback onPressed;
 
-  const BotaoBuscar({super.key, required this.onPressed});
+  const BotaoPrincipal({super.key, required this.texto, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -22,9 +23,9 @@ class BotaoBuscar extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), //coloca esse padding nas 4 direcoes
         ),
 
-        child: const Text(
-          'Buscar Receitas',
-          style: TextStyle(
+        child: Text(
+          texto,
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
