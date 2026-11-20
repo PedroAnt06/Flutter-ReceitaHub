@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:receita_hub/favoritos.dart';
 import 'package:receita_hub/request.dart';
 import 'package:receita_hub/screens/tela_pesquisa.dart';
 import '../theme/cores.dart';
@@ -256,7 +257,24 @@ class _TelaInicialState extends State<TelaInicial> {
                                       style: TextStyle(fontSize: 12, color: primary),
                                   ),
                                   Spacer(), // TEntei envolver o icone no expanded mas não foi muito eficaz o spacer criou o espaço vazio melhor
-                                  Icon(Icons.favorite_border_outlined, size: 20, color: primary,),
+
+                                  // coracao clicavel: favorita ou desfavorita a receita
+                                  // o setState redesenha a tela pra trocar o icone
+                                  IconButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        alternarFavorita(receita);
+                                      });
+                                    },
+                                    padding: const EdgeInsets.all(4),
+                                    constraints: const BoxConstraints(), // tira o tamanho minimo padrao do botao
+                                    icon: Icon(
+                                      // coracao cheio = favorita, so o contorno = nao favorita
+                                      ehFavorita(receita) ? Icons.favorite : Icons.favorite_border_outlined,
+                                      size: 20,
+                                      color: primary,
+                                    ),
+                                  ),
                                 ],
                               )
                             ],

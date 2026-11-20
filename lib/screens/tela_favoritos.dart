@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:receita_hub/favoritos.dart';
 
 import '../theme/cores.dart';
-import 'tela_detalhe.dart';
 
 // aba Favoritos: so o corpo da tela, a appbar e a navbar ficam na tela principal
-// por enquanto mostra uma receita fixa (depois vai mostrar so as favoritas de verdade)
-class TelaFavoritos extends StatelessWidget{
+// mostra as receitas que foram favoritadas na tela Explorar (lista do arquivo favoritos.dart)
+// StatefulWidget porque a tela muda quando tira uma receita dos favoritos
+class TelaFavoritos extends StatefulWidget{
   const TelaFavoritos({super.key});
 
+  @override
+  State<TelaFavoritos> createState() => _TelaFavoritosState();
+}
+
+class _TelaFavoritosState extends State<TelaFavoritos> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -27,22 +33,47 @@ class TelaFavoritos extends StatelessWidget{
                 style: TextStyle(fontSize: 14, color: grey)
             ),
 
-            // mesmo card da tela Explorar, so que com o coracao cheio
-            Card(
-              color: white,
-              clipBehavior: Clip.antiAlias,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: const BorderSide(color: grey),
+            // 1) nenhuma favorita ainda: mostra a mensagem
+            if (favoritas.isEmpty)
+              Center(
+                child: Column(
+                  spacing: 16,
+                  children: [
+
+                    // circulo com o icone
+                    Container(
+                      width: 100,
+                      height: 100,
+                      decoration: const BoxDecoration(
+                        color: rosaClaro,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.favorite_border_outlined, size: 48, color: primary),
+                    ),
+
+                    Text(
+                        'Nenhum favorito',
+                        style: TextStyle(fontSize: 22, color: primary, fontWeight: FontWeight.bold)
+                    ),
+                    Text(
+                        'Marque uma receita como favorita para encontrá-la aqui.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 14, color: grey)
+                    ),
+                  ],
+                ),
               ),
 
-              child: InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const TelaDetalhe()),
-                  );
-                },
+            // 2) tem favoritas: um card pra cada uma (mesmo card da tela Explorar)
+            // quando a lista esta vazia o for nao mostra nada
+            for (final receita in favoritas)
+              Card(
+                color: white,
+                clipBehavior: Clip.antiAlias, // a foto fica dentro da borda arredondada
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: const BorderSide(color: grey),
+                ),
 
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -50,14 +81,24 @@ class TelaFavoritos extends StatelessWidget{
                     spacing: 16,
                     children: [
 
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: background,
-                          borderRadius: BorderRadius.circular(12),
+                      //Foto da receita (vem da API pelo endereco que esta em receita['image'])
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          receita['image'],
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.cover,
+                          // se a foto nao carregar mostra o iconzinho
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: 80,
+                              height: 80,
+                              color: background,
+                              child: const Icon(Icons.restaurant),
+                            );
+                          },
                         ),
-                        child: const Icon(Icons.restaurant)
                       ),
 
                       Expanded(
@@ -65,31 +106,47 @@ class TelaFavoritos extends StatelessWidget{
                             spacing: 6,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Sopa de Lobo',
+                              Text(
+                                receita['name'],
                                 style: TextStyle(fontSize: 16, color: secondary, fontWeight: FontWeight.bold ),
                               ),
-                              const Text(
-                                'Uma sopa muito saborosa, famosa no desenho animado pica-pau delobo kk, e isso é maravilhosamente extraordinariamente gostoso',
+                              Text(
+                                '${receita['cuisine']} • ${receita['difficulty']}',
                                 style: TextStyle(fontSize: 13, color: grey ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const Row(
+                              Row(
                                 spacing: 4,
                                 children: [
                                   Icon(Icons.access_time, size: 14, color: primary,),
                                   Text(
-                                      '59 min',
+                                      '${receita['prepTimeMinutes'] + receita['cookTimeMinutes']} min',
                                       style: TextStyle(fontSize: 12, color: primary),
                                   ),
                                 ],
                               ),
-                              const Row(
+                              Row(
                                 spacing: 4,
                                 children: [
+                                  Icon(Icons.star, size: 14, color: primary,),
+                                  Text(
+                                      '${receita['rating']}',
+                                      style: TextStyle(fontSize: 12, color: primary),
+                                  ),
                                   Spacer(),
-                                  Icon(Icons.favorite, size: 20, color: primary,), // coracao cheio = favorita
+
+                                  // coracao cheio: clicou, tira dos favoritos e o card some da lista
+                                  IconButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        alternarFavorita(receita);
+                                      });
+                                    },
+                                    padding: const EdgeInsets.all(4),
+                                    constraints: const BoxConstraints(),
+                                    icon: Icon(Icons.favorite, size: 20, color: primary),
+                                  ),
                                 ],
                               )
                             ],
@@ -99,12 +156,13 @@ class TelaFavoritos extends StatelessWidget{
                   ),
                 ),
               ),
-            ),
 
-            Text(
-                'Toque no coração para remover.',
-                style: TextStyle(fontSize: 14, color: grey)
-            ),
+            // o aviso so aparece se tiver alguma favorita
+            if (favoritas.isNotEmpty)
+              Text(
+                  'Toque no coração para remover.',
+                  style: TextStyle(fontSize: 14, color: grey)
+              ),
           ],
         ),
 
