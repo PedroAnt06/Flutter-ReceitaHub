@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:receita_hub/screens/tela_pesquisa.dart';
 
 import '../theme/cores.dart';
 import 'tela_carregando.dart';
@@ -6,7 +7,6 @@ import 'tela_detalhe.dart';
 import 'tela_erro.dart';
 import 'tela_nenhum_favorito.dart';
 import 'tela_nenhum_resultado.dart';
-import 'tela_pesquisa.dart';
 import 'tela_validacao.dart';
 
 // lista com todas as telas, clicou em uma ela abre

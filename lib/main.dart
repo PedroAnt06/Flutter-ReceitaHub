@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import 'screens/tela_principal.dart';
+import 'package:receita_hub/screens/tela_principal.dart';
 import 'theme/cores.dart';
 
 // app começa

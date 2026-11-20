@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-
+import 'package:receita_hub/screens/tela_pesquisa.dart';
 import '../theme/cores.dart';
 import 'tela_detalhe.dart';
-import 'tela_pesquisa.dart';
+
 
 // aba Explorar: so o corpo da tela, a appbar e a navbar ficam na tela principal
 class TelaInicial extends StatelessWidget{
