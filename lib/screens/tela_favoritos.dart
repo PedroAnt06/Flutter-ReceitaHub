@@ -1,85 +1,113 @@
 import 'package:flutter/material.dart';
 
-import '../data/receitas.dart';
-import '../models/receita.dart';
 import '../theme/cores.dart';
-import '../widgets/card_receita.dart';
-import '../widgets/estado_mensagem.dart';
+import 'tela_detalhe.dart';
 
-// tela Favoritos (segunda aba do app)
-// mostra as receitas favoritadas, ou uma mensagem se nao tiver nenhuma
-// StatefulWidget porque a lista muda quando tira um favorito
-class TelaFavoritos extends StatefulWidget {
-  final VoidCallback onExplorar; // o botao "Explorar receitas" troca pra primeira aba
+// aba Favoritos: so o corpo da tela, a appbar e a navbar ficam na tela principal
+// por enquanto mostra uma receita fixa (depois vai mostrar so as favoritas de verdade)
+class TelaFavoritos extends StatelessWidget{
+  const TelaFavoritos({super.key});
 
-  const TelaFavoritos({super.key, required this.onExplorar});
-
-  @override
-  State<TelaFavoritos> createState() => _TelaFavoritosState();
-}
-
-class _TelaFavoritosState extends State<TelaFavoritos> {
   @override
   Widget build(BuildContext context) {
-    // pega so as receitas marcadas como favoritas (where = filtra a lista)
-    final favoritas = receitas.where((r) => r.favorita).toList();
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), //coloca esse padding nas 4 direcoes
+      child:
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'ReceitaHub',
-          style: TextStyle(color: primary, fontWeight: FontWeight.bold)),
-        backgroundColor: background,
-      ),
+        Column(
+          spacing: 16, // espacamento entre os itens dessa coluna
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+                'Favoritos',
+                style: TextStyle(fontSize: 20, color: primary, fontWeight: FontWeight.w600)
+            ),
+            Text(
+                'Receitas salvas nesta sessão.',
+                style: TextStyle(fontSize: 14, color: grey)
+            ),
 
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), //coloca esse padding nas 4 direcoes
-        child: _conteudo(favoritas),
-      ),
-    );
-  }
+            // mesmo card da tela Explorar, so que com o coracao cheio
+            Card(
+              color: white,
+              clipBehavior: Clip.antiAlias,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(color: grey),
+              ),
 
-  // decide o que mostrar: a mensagem de vazio ou a lista
-  Widget _conteudo(List<Receita> favoritas) {
-    // nenhuma favorita: mostra a mensagem (widgets/estado_mensagem.dart)
-    if (favoritas.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.only(top: 32),
-        child: EstadoMensagem(
-          icone: Icons.favorite_border_outlined,
-          titulo: 'Nenhum favorito',
-          mensagem: 'Marque uma receita como favorita para encontrá-la aqui.',
-          textoBotao: 'Explorar receitas',
-          onBotao: widget.onExplorar,
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const TelaDetalhe()),
+                  );
+                },
+
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  child: Row(
+                    spacing: 16,
+                    children: [
+
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: background,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.restaurant)
+                      ),
+
+                      Expanded(
+                          child: Column(
+                            spacing: 6,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Sopa de Lobo',
+                                style: TextStyle(fontSize: 16, color: secondary, fontWeight: FontWeight.bold ),
+                              ),
+                              const Text(
+                                'Uma sopa muito saborosa, famosa no desenho animado pica-pau delobo kk, e isso é maravilhosamente extraordinariamente gostoso',
+                                style: TextStyle(fontSize: 13, color: grey ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const Row(
+                                spacing: 4,
+                                children: [
+                                  Icon(Icons.access_time, size: 14, color: primary,),
+                                  Text(
+                                      '59 min',
+                                      style: TextStyle(fontSize: 12, color: primary),
+                                  ),
+                                ],
+                              ),
+                              const Row(
+                                spacing: 4,
+                                children: [
+                                  Spacer(),
+                                  Icon(Icons.favorite, size: 20, color: primary,), // coracao cheio = favorita
+                                ],
+                              )
+                            ],
+                          ))
+
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            Text(
+                'Toque no coração para remover.',
+                style: TextStyle(fontSize: 14, color: grey)
+            ),
+          ],
         ),
-      );
-    }
 
-    // tem favoritas: mostra a lista, um cartao pra cada
-    return Column(
-      spacing: 16, // espacamento entre os itens dessa coluna
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Favoritos',
-          style: TextStyle(fontSize: 20, color: primary, fontWeight: FontWeight.w600),
-        ),
-        Text(
-          'Receitas salvas nesta sessão.',
-          style: TextStyle(fontSize: 14, color: grey),
-        ),
-
-        for (final receita in favoritas)
-          CardReceita(
-            receita: receita,
-            onMudou: () => setState(() {}), // setState vazio so serve pra redesenhar (tira o card se desfavoritou)
-          ),
-
-        Text(
-          'Toque no coração para remover.',
-          style: TextStyle(fontSize: 14, color: grey),
-        ),
-      ],
     );
   }
 }

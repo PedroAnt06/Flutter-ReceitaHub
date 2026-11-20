@@ -9,7 +9,6 @@ void main() {
 }
 
 // O app inteiro: define o tema e qual tela aparece primeiro.
-// a primeira tela é a TelaPrincipal (screens/tela_principal.dart), que tem a barra de navegacao
 class MeuApp extends StatelessWidget {
   const MeuApp({super.key});
 
@@ -21,7 +20,7 @@ class MeuApp extends StatelessWidget {
       theme: ThemeData(
         scaffoldBackgroundColor: background
       ),
-      home: const TelaPrincipal(),
+      home: const TelaPrincipal(), // a primeira tela é a principal, que tem a navbar
     );
   }
 }

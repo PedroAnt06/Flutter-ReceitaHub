@@ -1,150 +1,23 @@
 import 'package:flutter/material.dart';
 
-import '../data/receitas.dart';
 import '../theme/cores.dart';
-import '../widgets/botao_principal.dart';
-import '../widgets/campo_busca.dart';
-import '../widgets/card_receita.dart';
-import '../widgets/carregando_receitas.dart';
-import '../widgets/estado_mensagem.dart';
+import 'tela_detalhe.dart';
 import 'tela_pesquisa.dart';
 
-// mude para true se quiser ver a tela de erro de conexao
-bool simularErro = false;
-
-// tela Explorar (primeira aba do app)
-// mostra a lista de receitas e leva pra tela de pesquisa e pro detalhe
-// StatefulWidget = tela que pode mudar (carregando, erro, lista pronta...)
-class TelaInicial extends StatefulWidget {
+// aba Explorar: so o corpo da tela, a appbar e a navbar ficam na tela principal
+class TelaInicial extends StatelessWidget{
   const TelaInicial({super.key}); //construtor para chamar na classe acima
 
   @override
-  State<TelaInicial> createState() => _TelaInicialState();
-}
-
-// Aqui fica a "memória" da tela e a lógica dela
-class _TelaInicialState extends State<TelaInicial> {
-  final _controller = TextEditingController(); // le o que foi digitado no campo
-  bool _carregando = true; // true = mostra a tela de carregando
-  bool _deuErro = false; // true = mostra a tela de erro
-
-  @override
-  void initState() {
-    super.initState();
-    _esperar(); // assim que a tela abre comeca a "carregar"
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose(); // libera o controller quando a tela fecha
-    super.dispose();
-  }
-
-  // finge uma espera de internet: depois de 1 segundo termina de carregar
-  // Future.delayed roda o que esta dentro das chaves depois do tempo passar
-  void _esperar() {
-    Future.delayed(const Duration(seconds: 1), () {
-      if (!mounted) return; // se a tela ja fechou nao faz nada
-      setState(() {
-        _carregando = false;
-        _deuErro = simularErro; // se simularErro for true, cai na tela de erro
-      });
-    });
-  }
-
-  // botao "Tentar novamente": volta pra carregando e espera de novo
-  void _tentarNovamente() {
-    setState(() {
-      _carregando = true;
-      _deuErro = false;
-    });
-    _esperar();
-  }
-
-  // abre a tela de pesquisa levando o que foi digitado
-  void _abrirPesquisa() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => TelaPesquisa(termoInicial: _controller.text),
-      ),
-    ).then((_) => setState(() {})); // quando voltar, redesenha (os coracoes podem ter mudado)
-  }
-
-  // decide o que aparece embaixo do titulo: carregando, erro ou a lista
-  Widget _conteudo() {
-    // 1) ainda carregando (widgets/carregando_receitas.dart)
-    if (_carregando) {
-      return const CarregandoReceitas();
-    }
-
-    // 2) deu erro (widgets/estado_mensagem.dart)
-    if (_deuErro) {
-      return EstadoMensagem(
-        icone: Icons.error_outline,
-        titulo: 'Não foi possível carregar as receitas.',
-        mensagem: 'Verifique sua conexão e tente novamente.',
-        textoBotao: 'Tentar novamente',
-        onBotao: _tentarNovamente,
-      );
-    }
-
-    // 3) deu certo: mostra o campo, o botao e a lista de receitas
-    return Column(
-      spacing: 16, // espacamento entre os itens dessa coluna
-      crossAxisAlignment: CrossAxisAlignment.start, // alinha os filhos no eixo oposto ao fluxo principal do layout
-      children: [
-
-        // campo de texto (widgets/campo_busca.dart)
-        // aqui nao valida nada, quem valida é a tela de pesquisa
-        CampoBusca(
-          controller: _controller,
-          erro: null,
-          onPesquisar: _abrirPesquisa,
-        ),
-
-        // botao de buscar (widgets/botao_principal.dart)
-        BotaoPrincipal(texto: 'Buscar Receitas', onPressed: _abrirPesquisa),
-
-        Text(
-            'Receitas disponíveis',
-            style: TextStyle(fontSize: 18, color: primary, fontWeight: FontWeight.w600)
-        ),
-
-        Text(
-            'Selecione uma receita para ver o preparo.',
-            style: TextStyle(fontSize: 14, color: grey)
-        ),
-
-        // um cartao pra cada receita da lista (widgets/card_receita.dart)
-        // setState vazio so serve pra redesenhar a tela
-        for (final receita in receitas)
-          CardReceita(
-            receita: receita,
-            onMudou: () => setState(() {}),
-          ),
-      ],
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'ReceitaHub',
-          style: TextStyle(color: primary, fontWeight: FontWeight.bold)),
-        backgroundColor: background,
-      ),
-
-      // SingleChildScrollView deixa a tela rolar quando o conteudo nao cabe
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), //coloca esse padding nas 4 direcoes
-        child:
+    // SingleChildScrollView deixa a tela rolar se nao couber tudo
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), //coloca esse padding nas 4 direcoes
+      child:
 
         Column(
           spacing: 16, // espacamento entre os itens dessa coluna
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start, // alinha os filhos no eixo oposto ao fluxo principal do layout
           children: [
             Text(
                 'Receitas',
@@ -155,12 +28,145 @@ class _TelaInicialState extends State<TelaInicial> {
                 style: TextStyle(fontSize: 14, color: grey)
             ),
 
-            // o resto muda conforme o estado (carregando, erro ou lista)
-            _conteudo(),
+            TextField(
+              decoration: InputDecoration(
+                hintText: 'Buscar receitas...', //placeholder
+                hintStyle: const TextStyle(color:grey),
+                prefixIcon: const Icon(Icons.search, color: primary,),
+                filled: true, // fundo do campo
+                fillColor: white, //cor do fundo do campo
+
+                //borda
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                  borderSide: const BorderSide(color: grey),
+                ),
+
+                //borda quando clicada
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                  borderSide: const BorderSide(color: primary, width: 2),
+                ),
+              ),
+            ),
+
+            SizedBox(
+              width: double.infinity, //ocupa toda a tela
+              height: 54, //define altura
+              child: FilledButton( //havia usado esse widget puro, mas nao ocupava toda a tela ai envolvi ele no SizedBox que delimita o tamanho total a tela
+
+                // clicou: abre a tela de pesquisa
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const TelaPesquisa()),
+                  );
+                },
+                style: FilledButton.styleFrom(
+                    backgroundColor: primary,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), //coloca esse padding nas 4 direcoes
+                ),
+
+
+                child: const Text(
+                  'Buscar Receitas',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+              ),
+            ),
+
+            Text(
+                'Receitas disponíveis',
+                style: TextStyle(fontSize: 18, color: primary, fontWeight: FontWeight.w600)
+            ),
+
+            Text(
+                'Selecione uma receita para ver o preparo.',
+                style: TextStyle(fontSize: 14, color: grey)
+            ),
+
+            Card(
+              color: white,
+              clipBehavior: Clip.antiAlias, // o efeito do clique fica dentro da borda arredondada
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(color: grey),
+              ),
+
+              // InkWell deixa o card clicavel: clicou, abre o detalhe da receita
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const TelaDetalhe()),
+                  );
+                },
+
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), //coloca esse padding nas 4 direcoes
+                  child: Row(
+                    spacing: 16, // Espaço entre a foto e os textos
+                    children: [
+
+                      //Foto nesse container dentro dessa linha
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: background,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.restaurant)
+                      ),
+
+                      //Parte dos textos, que o expanded como mostrado em aula pega todo o espaço que está restante
+                      Expanded(
+                          child: Column(
+                            spacing: 6,
+                            crossAxisAlignment: CrossAxisAlignment.start, // alinha os filhos no eixo oposto ao fluxo principal do layout
+                            children: [
+                              const Text(
+                                'Sopa de Lobo',
+                                style: TextStyle(fontSize: 16, color: secondary, fontWeight: FontWeight.bold ),
+                              ),
+                              const Text(
+                                'Uma sopa muito saborosa, famosa no desenho animado pica-pau delobo kk, e isso é maravilhosamente extraordinariamente gostoso',
+                                style: TextStyle(fontSize: 13, color: grey ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis, //Acima de 2 linhas coloca o '...'
+                              ),
+                              const Row(
+                                spacing: 4,
+                                children: [
+                                  Icon(Icons.access_time, size: 14, color: primary,),
+                                  Text(
+                                      '59 min',
+                                      style: TextStyle(fontSize: 12, color: primary),
+                                  ),
+                                ],
+                              ),
+                              const Row(
+                                spacing: 4,
+                                children: [
+                                  Spacer(), // TEntei envolver o icone no expanded mas não foi muito eficaz o spacer criou o espaço vazio melhor
+                                  Icon(Icons.favorite_border_outlined, size: 20, color: primary,),
+                                ],
+                              )
+                            ],
+                          ))
+
+                    ],
+                  ),
+                ),
+              ),
+            )
           ],
         ),
 
-      ),
     );
   }
 }
