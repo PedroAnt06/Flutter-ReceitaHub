@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:receita_hub/favoritos.dart';
+import 'package:receita_hub/screens/tela_detalhe.dart';
 
 import '../theme/cores.dart';
 
@@ -75,84 +76,95 @@ class _TelaFavoritosState extends State<TelaFavoritos> {
                   side: const BorderSide(color: grey),
                 ),
 
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  child: Row(
-                    spacing: 16,
-                    children: [
+                child: InkWell(
+                  // clicou no card: abre o detalhe daquela receita e espera voltar
+                  onTap: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => TelaDetalhe(receita: receita)),
+                    );
+                    // quando volta o coracao pode ter mudado la no detalhe, entao redesenha
+                    setState(() {});
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    child: Row(
+                      spacing: 16,
+                      children: [
 
-                      //Foto da receita (vem da API pelo endereco que esta em receita['image'])
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          receita['image'],
-                          width: 80,
-                          height: 80,
-                          fit: BoxFit.cover,
-                          // se a foto nao carregar mostra o iconzinho
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              width: 80,
-                              height: 80,
-                              color: background,
-                              child: const Icon(Icons.restaurant),
-                            );
-                          },
+                        //Foto da receita (vem da API pelo endereco que esta em receita['image'])
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            receita['image'],
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
+                            // se a foto nao carregar mostra o iconzinho
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                width: 80,
+                                height: 80,
+                                color: background,
+                                child: const Icon(Icons.restaurant),
+                              );
+                            },
+                          ),
                         ),
-                      ),
 
-                      Expanded(
-                          child: Column(
-                            spacing: 6,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                receita['name'],
-                                style: TextStyle(fontSize: 16, color: secondary, fontWeight: FontWeight.bold ),
-                              ),
-                              Text(
-                                '${receita['cuisine']} • ${receita['difficulty']}',
-                                style: TextStyle(fontSize: 13, color: grey ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Row(
-                                spacing: 4,
-                                children: [
-                                  Icon(Icons.access_time, size: 14, color: primary,),
-                                  Text(
-                                      '${receita['prepTimeMinutes'] + receita['cookTimeMinutes']} min',
-                                      style: TextStyle(fontSize: 12, color: primary),
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                spacing: 4,
-                                children: [
-                                  Icon(Icons.star, size: 14, color: primary,),
-                                  Text(
-                                      '${receita['rating']}',
-                                      style: TextStyle(fontSize: 12, color: primary),
-                                  ),
-                                  Spacer(),
+                        Expanded(
+                            child: Column(
+                              spacing: 6,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  receita['name'],
+                                  style: TextStyle(fontSize: 16, color: secondary, fontWeight: FontWeight.bold ),
+                                ),
+                                Text(
+                                  '${receita['cuisine']} • ${receita['difficulty']}',
+                                  style: TextStyle(fontSize: 13, color: grey ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Row(
+                                  spacing: 4,
+                                  children: [
+                                    Icon(Icons.access_time, size: 14, color: primary,),
+                                    Text(
+                                        '${receita['prepTimeMinutes'] + receita['cookTimeMinutes']} min',
+                                        style: TextStyle(fontSize: 12, color: primary),
+                                    ),
+                                  ],
+                                ),
+                                Row(
+                                  spacing: 4,
+                                  children: [
+                                    Icon(Icons.star, size: 14, color: primary,),
+                                    Text(
+                                        '${receita['rating']}',
+                                        style: TextStyle(fontSize: 12, color: primary),
+                                    ),
+                                    Spacer(),
 
-                                  // coracao cheio: clicou, tira dos favoritos e o card some da lista
-                                  IconButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        alternarFavorita(receita);
-                                      });
-                                    },
-                                    padding: const EdgeInsets.all(4),
-                                    constraints: const BoxConstraints(),
-                                    icon: Icon(Icons.favorite, size: 20, color: primary),
-                                  ),
-                                ],
-                              )
-                            ],
-                          ))
+                                    // coracao cheio: clicou, tira dos favoritos e o card some da lista
+                                    IconButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          alternarFavorita(receita);
+                                        });
+                                      },
+                                      padding: const EdgeInsets.all(4),
+                                      constraints: const BoxConstraints(),
+                                      icon: Icon(Icons.favorite, size: 20, color: primary),
+                                    ),
+                                  ],
+                                )
+                              ],
+                            ))
 
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

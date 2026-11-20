@@ -1,15 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:receita_hub/favoritos.dart';
 
 import '../theme/cores.dart';
 
+// receita de exemplo, usada quando essa tela é aberta pelo menu ou pela pesquisa
+// (essas telas ainda sao fixas e nao tem uma receita da API pra mandar)
+// tem os mesmos campos que a API manda, por isso a tela funciona igual
+final Map receitaExemplo = {
+  'id': 0,
+  'name': 'Sopa de Lobo',
+  'cuisine': 'Brasileira',
+  'difficulty': 'Fácil',
+  'prepTimeMinutes': 19,
+  'cookTimeMinutes': 40,
+  'servings': 4,
+  'rating': 4.5,
+  'image': '',
+  'ingredients': ['Batata', 'Cenoura', 'Cebola', 'Caldo de legumes'],
+  'instructions': [
+    'Pique os legumes em cubos.',
+    'Refogue a cebola em uma panela.',
+    'Adicione os legumes e o caldo e cozinhe por 40 minutos.',
+  ],
+};
+
 // tela com tudo da receita: foto, tempo, ingredientes e modo de preparo
-// abre quando clica em um card de receita
-// por enquanto é so o layout, os dados sao fixos (Sopa de Lobo)
-class TelaDetalhe extends StatelessWidget{
-  const TelaDetalhe({super.key});
+// abre quando clica em um card de receita, que manda a receita (um Map da API) pra ca
+// StatefulWidget porque o coracao muda quando clica
+class TelaDetalhe extends StatefulWidget{
+  final Map receita; // a receita que foi clicada
+
+  // required = é obrigatorio mandar a receita quando abrir essa tela
+  const TelaDetalhe({super.key, required this.receita});
 
   @override
+  State<TelaDetalhe> createState() => _TelaDetalheState();
+}
+
+class _TelaDetalheState extends State<TelaDetalhe> {
+  @override
   Widget build(BuildContext context) {
+    // atalho pra nao escrever widget.receita toda hora
+    final receita = widget.receita;
+
+    // a API manda os ingredientes e os passos em listas de texto
+    final List ingredientes = receita['ingredients'];
+    final List passos = receita['instructions'];
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -18,11 +55,18 @@ class TelaDetalhe extends StatelessWidget{
         backgroundColor: background,
         iconTheme: IconThemeData(color: primary), // cor da setinha de voltar (ela aparece sozinha)
 
-        // coracao la em cima (por enquanto so enfeite)
+        // coracao la em cima: favorita ou desfavorita e o setState troca o icone
         actions: [
           IconButton(
-            icon: Icon(Icons.favorite_border_outlined, color: primary),
-            onPressed: () {},
+            icon: Icon(
+              ehFavorita(receita) ? Icons.favorite : Icons.favorite_border_outlined,
+              color: primary,
+            ),
+            onPressed: () {
+              setState(() {
+                alternarFavorita(receita);
+              });
+            },
           ),
         ],
       ),
@@ -37,23 +81,32 @@ class TelaDetalhe extends StatelessWidget{
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
 
-              // foto grande (por enquanto so um icone)
-              Container(
-                width: double.infinity,
-                height: 160,
-                decoration: BoxDecoration(
-                  color: rosaClaro,
-                  borderRadius: BorderRadius.circular(16),
+              // foto grande da receita (vem da API), se nao carregar mostra o icone
+              // ClipRRect deixa os cantos da foto arredondados
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.network(
+                  receita['image'],
+                  width: double.infinity,
+                  height: 200,
+                  fit: BoxFit.cover, // a foto preenche o espaco sem esticar
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      width: double.infinity,
+                      height: 200,
+                      color: rosaClaro,
+                      child: const Icon(Icons.restaurant, size: 64, color: primary),
+                    );
+                  },
                 ),
-                child: const Icon(Icons.restaurant, size: 64, color: primary),
               ),
 
               Text(
-                  'Sopa de Lobo',
+                  receita['name'],
                   style: TextStyle(fontSize: 24, color: primary, fontWeight: FontWeight.bold)
               ),
               Text(
-                  'Uma sopa muito saborosa, famosa no desenho animado pica-pau delobo kk, e isso é maravilhosamente extraordinariamente gostoso',
+                  '${receita['cuisine']} • ${receita['difficulty']} • ${receita['rating']} / 5',
                   style: TextStyle(fontSize: 14, color: grey)
               ),
 
@@ -69,10 +122,11 @@ class TelaDetalhe extends StatelessWidget{
                         color: rosaClaro,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Column(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('59 min', style: TextStyle(fontSize: 16, color: primary, fontWeight: FontWeight.bold)),
+                          // tempo total = preparo + cozimento
+                          Text('${receita['prepTimeMinutes'] + receita['cookTimeMinutes']} min', style: TextStyle(fontSize: 16, color: primary, fontWeight: FontWeight.bold)),
                           Text('tempo total', style: TextStyle(fontSize: 11, color: grey)),
                         ],
                       ),
@@ -85,10 +139,10 @@ class TelaDetalhe extends StatelessWidget{
                         color: rosaClaro,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Column(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('4', style: TextStyle(fontSize: 16, color: primary, fontWeight: FontWeight.bold)),
+                          Text('${receita['servings']}', style: TextStyle(fontSize: 16, color: primary, fontWeight: FontWeight.bold)),
                           Text('porções', style: TextStyle(fontSize: 11, color: grey)),
                         ],
                       ),
@@ -101,10 +155,10 @@ class TelaDetalhe extends StatelessWidget{
                         color: rosaClaro,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Column(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Não salva', style: TextStyle(fontSize: 16, color: primary, fontWeight: FontWeight.bold)),
+                          Text(ehFavorita(receita) ? 'Salva' : 'Não salva', style: TextStyle(fontSize: 16, color: primary, fontWeight: FontWeight.bold)),
                           Text('nos favoritos', style: TextStyle(fontSize: 11, color: grey)),
                         ],
                       ),
@@ -118,81 +172,40 @@ class TelaDetalhe extends StatelessWidget{
                   style: TextStyle(fontSize: 18, color: primary, fontWeight: FontWeight.w600)
               ),
 
-              // cada ingrediente é uma linha com uma bolinha e o texto
-              const Row(
-                spacing: 8,
-                children: [
-                  Icon(Icons.circle, size: 6, color: primary),
-                  Text('Batata', style: TextStyle(fontSize: 14, color: grey)),
-                ],
-              ),
-              const Row(
-                spacing: 8,
-                children: [
-                  Icon(Icons.circle, size: 6, color: primary),
-                  Text('Cenoura', style: TextStyle(fontSize: 14, color: grey)),
-                ],
-              ),
-              const Row(
-                spacing: 8,
-                children: [
-                  Icon(Icons.circle, size: 6, color: primary),
-                  Text('Cebola', style: TextStyle(fontSize: 14, color: grey)),
-                ],
-              ),
-              const Row(
-                spacing: 8,
-                children: [
-                  Icon(Icons.circle, size: 6, color: primary),
-                  Text('Caldo de legumes', style: TextStyle(fontSize: 14, color: grey)),
-                ],
-              ),
+              // um item com bolinha pra cada ingrediente da lista
+              for (final ingrediente in ingredientes)
+                Row(
+                  spacing: 8,
+                  children: [
+                    Icon(Icons.circle, size: 6, color: primary),
+                    Expanded(
+                      child: Text('$ingrediente', style: TextStyle(fontSize: 14, color: grey)),
+                    ),
+                  ],
+                ),
 
               Text(
                   'Modo de preparo',
                   style: TextStyle(fontSize: 18, color: primary, fontWeight: FontWeight.w600)
               ),
 
-              // cada passo é uma linha com a bolinha do numero e o texto
-              const Row(
-                spacing: 12,
-                children: [
-                  CircleAvatar(
-                    radius: 12,
-                    backgroundColor: primary,
-                    child: Text('1', style: TextStyle(fontSize: 12, color: white, fontWeight: FontWeight.bold)),
-                  ),
-                  Expanded(
-                    child: Text('Pique os legumes em cubos.', style: TextStyle(fontSize: 14, color: grey)),
-                  ),
-                ],
-              ),
-              const Row(
-                spacing: 12,
-                children: [
-                  CircleAvatar(
-                    radius: 12,
-                    backgroundColor: primary,
-                    child: Text('2', style: TextStyle(fontSize: 12, color: white, fontWeight: FontWeight.bold)),
-                  ),
-                  Expanded(
-                    child: Text('Refogue a cebola em uma panela.', style: TextStyle(fontSize: 14, color: grey)),
-                  ),
-                ],
-              ),
-              const Row(
-                spacing: 12,
-                children: [
-                  CircleAvatar(
-                    radius: 12,
-                    backgroundColor: primary,
-                    child: Text('3', style: TextStyle(fontSize: 12, color: white, fontWeight: FontWeight.bold)),
-                  ),
-                  Expanded(
-                    child: Text('Adicione os legumes e o caldo e cozinhe por 40 minutos.', style: TextStyle(fontSize: 14, color: grey)),
-                  ),
-                ],
-              ),
+              // um item pra cada passo, o i é a posicao do passo na lista (comeca em 0)
+              // por isso mostra i + 1 na bolinha
+              for (var i = 0; i < passos.length; i++)
+                Row(
+                  spacing: 12,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CircleAvatar(
+                      radius: 12,
+                      backgroundColor: primary,
+                      child: Text('${i + 1}', style: TextStyle(fontSize: 12, color: white, fontWeight: FontWeight.bold)),
+                    ),
+                    Expanded(
+                      child: Text('${passos[i]}', style: TextStyle(fontSize: 14, color: grey)),
+                    ),
+                  ],
+                ),
             ],
           ),
 

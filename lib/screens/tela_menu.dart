@@ -37,7 +37,7 @@ class TelaMenu extends StatelessWidget {
           ListTile(
             title: Text('Detalhe da receita'),
             onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const TelaDetalhe()));
+              Navigator.push(context, MaterialPageRoute(builder: (context) => TelaDetalhe(receita: receitaExemplo)));
             },
           ),
           ListTile(

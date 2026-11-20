@@ -89,7 +89,7 @@ class TelaPesquisa extends StatelessWidget{
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const TelaDetalhe()),
+                      MaterialPageRoute(builder: (context) => TelaDetalhe(receita: receitaExemplo)),
                     );
                   },
 
