@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- permissao pra acessar a internet (necessaria pra chamar a API) -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="receita_hub"
         android:name="${applicationName}"
